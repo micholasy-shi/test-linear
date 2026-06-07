@@ -1,0 +1,115 @@
+# NovaClaw Docker Compose Configuration
+
+services:
+  novaclaw:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: novaclaw:latest
+    container_name: novaclaw-server
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NOVACLAW_PORT=3000
+      - NOVACLAW_BIND=0.0.0.0
+      - NOVACLAW_WORKSPACE=/app/workspace
+      - NOVACLAW_LOG_LEVEL=info
+      # AI Model API Keys (uncomment and configure as needed)
+      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      # Persistent workspace
+      - novaclaw-workspace:/app/workspace
+      # Skills directory
+      - ./skills:/app/skills:ro
+      # Configuration
+      - ./novaclaw.yml:/app/novaclaw.yml:ro
+      # Logs
+      - novaclaw-logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - novaclaw-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # Optional: Redis for caching (uncomment to enable)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: novaclaw-redis
+  #   command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+  #   volumes:
+  #     - novaclaw-redis:/data
+  #   networks:
+  #     - novaclaw-network
+  #   restart: unless-stopped
+
+  # Optional: PostgreSQL for persistent storage (uncomment to enable)
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: novaclaw-postgres
+  #   environment:
+  #     POSTGRES_DB: novaclaw
+  #     POSTGRES_USER: novaclaw
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-novaclaw}
+  #   volumes:
+  #     - novaclaw-postgres:/var/lib/postgresql/data
+  #   networks:
+  #     - novaclaw-network
+  #   restart: unless-stopped
+
+  # Optional: Monitoring with Prometheus (uncomment to enable)
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: novaclaw-prometheus
+  #   command:
+  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  #     - '--storage.tsdb.path=/prometheus'
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #     - novaclaw-prometheus:/prometheus
+  #   networks:
+  #     - novaclaw-network
+  #   restart: unless-stopped
+
+  # Optional: Log aggregation with Loki (uncomment to enable)
+  # loki:
+  #   image: grafana/loki:latest
+  #   container_name: novaclaw-loki
+  #   command: -config.file=/etc/loki/local-config.yaml
+  #   volumes:
+  #     - novaclaw-loki:/tmp/loki
+  #   networks:
+  #     - novaclaw-network
+  #   restart: unless-stopped
+
+volumes:
+  novaclaw-workspace:
+    driver: local
+  novaclaw-logs:
+    driver: local
+  # novaclaw-redis:
+  #   driver: local
+  # novaclaw-postgres:
+  #   driver: local
+  # novaclaw-prometheus:
+  #   driver: local
+  # novaclaw-loki:
+  #   driver: local
+
+networks:
+  novaclaw-network:
+    driver: bridge

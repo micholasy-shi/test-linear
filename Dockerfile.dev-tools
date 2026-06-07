@@ -1,0 +1,48 @@
+# NovaClaw Development Tools Docker Image
+FROM node:22-alpine
+
+# Install development tools and utilities
+RUN apk add --no-cache \
+    git \
+    bash \
+    curl \
+    wget \
+    vim \
+    nano \
+    jq \
+    python3 \
+    py3-pip \
+    make \
+    g++ \
+    sqlite \
+    postgresql-client \
+    redis \
+    htop \
+    tree \
+    && rm -rf /var/cache/apk/*
+
+# Install global npm packages
+RUN npm install -g \
+    pnpm \
+    typescript \
+    ts-node \
+    nodemon \
+    pm2 \
+    @types/node
+
+# Install Python tools
+RUN pip3 install --no-cache-dir \
+    httpie \
+    requests \
+    pytest
+
+# Create workspace directory
+WORKDIR /workspace
+
+# Set up shell
+RUN echo 'alias ll="ls -la"' >> /etc/profile
+RUN echo 'alias la="ls -la"' >> /etc/profile
+RUN echo 'alias ..="cd .."' >> /etc/profile
+
+# Default command
+CMD ["bash"]

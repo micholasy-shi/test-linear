@@ -1,0 +1,46 @@
+# NovaClaw Development Docker Image
+FROM node:22-alpine AS development
+
+# Install development dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    git \
+    curl \
+    bash \
+    vim \
+    sqlite
+
+# Set working directory
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy package files
+COPY package.json pnpm-lock.yaml* ./
+
+# Install all dependencies (including dev dependencies)
+RUN pnpm install
+
+# Copy source code
+COPY . .
+
+# Create app user
+RUN addgroup -g 1001 -S novaclaw && \
+    adduser -S novaclaw -u 1001 -G novaclaw && \
+    chown -R novaclaw:novaclaw /app
+
+# Switch to app user
+USER novaclaw
+
+# Environment variables for development
+ENV NODE_ENV=development
+ENV DEBUG=novaclaw:*
+
+# Expose ports
+EXPOSE 3000 9229
+
+# Start in development mode with hot reload
+CMD ["pnpm", "run", "dev"]

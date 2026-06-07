@@ -1,0 +1,96 @@
+# NovaClaw Development Docker Compose Configuration
+
+services:
+  novaclaw-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    image: novaclaw:dev
+    container_name: novaclaw-dev-server
+    ports:
+      - "3000:3000"
+      - "9229:9229" # Node.js debug port
+    environment:
+      - NODE_ENV=development
+      - NOVACLAW_PORT=3000
+      - NOVACLAW_BIND=0.0.0.0
+      - NOVACLAW_WORKSPACE=/app/workspace
+      - NOVACLAW_LOG_LEVEL=debug
+      - DEBUG=novaclaw:*
+    volumes:
+      # Source code for hot reload
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./skills:/app/skills
+      - ./novaclaw.yml:/app/novaclaw.yml
+      # Development workspace
+      - novaclaw-dev-workspace:/app/workspace
+      # Node modules (for faster rebuilds)
+      - novaclaw-dev-node-modules:/app/node_modules
+    command: ["pnpm", "run", "dev"]
+    restart: unless-stopped
+    networks:
+      - novaclaw-dev-network
+    stdin_open: true
+    tty: true
+
+  # Development database
+  postgres-dev:
+    image: postgres:15-alpine
+    container_name: novaclaw-dev-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: novaclaw_dev
+      POSTGRES_USER: novaclaw
+      POSTGRES_PASSWORD: novaclaw_dev
+    volumes:
+      - novaclaw-dev-postgres:/var/lib/postgresql/data
+    networks:
+      - novaclaw-dev-network
+    restart: unless-stopped
+
+  # Development Redis
+  redis-dev:
+    image: redis:7-alpine
+    container_name: novaclaw-dev-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 64mb
+    volumes:
+      - novaclaw-dev-redis:/data
+    networks:
+      - novaclaw-dev-network
+    restart: unless-stopped
+
+  # Development tools container
+  dev-tools:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev-tools
+    image: novaclaw:dev-tools
+    container_name: novaclaw-dev-tools
+    volumes:
+      - .:/workspace
+      - novaclaw-dev-node-modules:/workspace/node_modules
+    working_dir: /workspace
+    command: ["sleep", "infinity"]
+    networks:
+      - novaclaw-dev-network
+    profiles:
+      - tools
+
+volumes:
+  novaclaw-dev-workspace:
+    driver: local
+  novaclaw-dev-postgres:
+    driver: local
+  novaclaw-dev-redis:
+    driver: local
+  novaclaw-dev-node-modules:
+    driver: local
+
+networks:
+  novaclaw-dev-network:
+    driver: bridge
