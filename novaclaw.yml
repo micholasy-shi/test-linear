@@ -1,0 +1,229 @@
+# NovaClaw Configuration
+
+# 基础配置
+port: 3000
+bind: "loopback"
+workspaceDir: "~/.novaclaw/workspace"
+
+# AI 模型配置
+models:
+  primary: ""
+  fallback: ""
+  local: ""
+
+  # 模型提供商配置 — 可在运行时通过 POST /api/config 或前端页面修改
+  providers: {}
+
+# Skills 配置
+# 每个 skill 是一个目录（目录名 = skill ID），目录下放 skill.md
+skills:
+  dirs:
+    - "./skills/workspace"
+    - "./skills/managed"
+    - "./skills/bundled"
+  include: ["**/*.md"]
+  exclude: ["**/drafts/**"]
+
+# 工具策略
+tools:
+  policy: "full"  # minimal | coding | messaging | full | balanced
+
+  sandbox:
+    enabled: true
+    docker: false
+    timeout: 600000
+    maxMemory: "512MB"
+    allowedCommands:
+      - "agent"
+      # ── 云平台 CLI ──
+      - "climc"
+      # ── 版本控制 ──
+      - "git"
+      # ── JS/Node 生态 ──
+      - "node"
+      - "npm"
+      - "npx"
+      - "pnpm"
+      - "yarn"
+      # ── Python 生态 ──
+      - "python"
+      - "python3"
+      - "pip"
+      - "pip3"
+      # ── 网络工具 ──
+      - "curl"
+      - "wget"
+      - "ping"
+      - "dig"
+      - "nslookup"
+      - "ssh"
+      - "scp"
+      # ── 文件与文本处理 ──
+      - "cd"
+      - "ls"
+      - "cat"
+      - "head"
+      - "tail"
+      - "less"
+      - "grep"
+      - "awk"
+      - "sed"
+      - "sort"
+      - "uniq"
+      - "wc"
+      - "find"
+      - "xargs"
+      - "jq"
+      - "tee"
+      - "diff"
+      # ── 文件管理 ──
+      - "cp"
+      - "mv"
+      - "mkdir"
+      - "touch"
+      - "chmod"
+      - "file"
+      - "tar"
+      - "gzip"
+      - "zip"
+      - "unzip"
+      # ── 系统信息 ──
+      - "echo"
+      - "env"
+      - "which"
+      - "whoami"
+      - "hostname"
+      - "uname"
+      - "date"
+      - "df"
+      - "du"
+      - "free"
+      - "ps"
+      - "top"
+      # ── 容器 ──
+      - "docker"
+      - "docker-compose"
+      - "kubectl"
+
+  # 若命令仅在登录 shell 的 PATH 中，设为 true 可继承 ~/.zshrc 等环境
+  execUseLoginShell: true
+
+  # 允许使用 exec 工具的渠道（未列出的渠道将被规则拦截）
+  # 已安装的 OpenClaw 扩展会自动获得 exec 权限
+  allowExecInChannels:
+    - "webchat"
+    - "cli"
+
+  # 是否用 LLM 对工具返回结果做二次格式化
+  formatResultWithLLM: false
+
+  # 是否自动执行模型返回的工具调用
+  autoExecuteParsedCalls: true
+
+  permissions:
+    fileSystem:
+      read: true
+      write: true
+      execute: false
+      delete: false
+    network:
+      http: true
+      https: true
+      websocket: true
+    system:
+      shell: false
+      process: false
+
+# 记忆系统（本地 RAG）
+memory:
+  enabled: true
+  storageDir: "~/.novaclaw/memory"
+  indexConversations: true
+  indexWorkspace: true
+  maxDocumentSizeMB: 10
+  maxRetrievalNodes: 5
+
+# 渠道配置
+channels:
+  enabled:
+    - "webchat"
+    - "cli"
+    # 已安装的 OpenClaw 扩展（如 WPS AgentSpace）会自动发现并启用，
+    # 无需手动添加。如需手动启用未认证的扩展，取消注释：
+    # - "feishu"
+    # - "telegram"
+    # - "discord"
+    # - "slack"
+    # - "whatsapp"
+
+  webchat:
+    path: "/chat"
+    cors: true
+    maxMessageSize: "10MB"
+
+  cli:
+    prompt: "novaclaw> "
+    history: true
+    historySize: 1000
+
+# 性能优化
+performance:
+  skillsCache:
+    maxSize: 100
+    ttl: 300  # seconds
+
+  semanticSearch:
+    enabled: true
+    threshold: 0.7
+    maxResults: 5
+
+  streaming:
+    enabled: true
+    chunkSize: 256
+    maxConcurrent: 3
+
+  memory:
+    maxHeapSize: "128MB"
+    gcInterval: 30000
+    sessionTimeout: 300000
+
+# 安全配置
+security:
+  auth:
+    enabled: false
+    type: "none"  # none | basic | bearer | oauth
+
+  rateLimit:
+    enabled: true
+    windowMs: 60000
+    maxRequests: 100
+
+  cors:
+    enabled: true
+    origins: ["*"]
+    credentials: false
+
+# 日志配置
+logging:
+  level: "debug"  # debug | info | warn | error
+  format: "json"  # text | json | pretty
+  showCaller: true
+  file:
+    enabled: false
+    path: "./logs/novaclaw.log"
+    maxSize: "10MB"
+    maxFiles: 5
+
+# 监控配置
+monitoring:
+  enabled: true
+  health:
+    enabled: true
+    path: "/health"
+    interval: 30000
+
+# 集群配置（预留）
+cluster:
+  enabled: false
+  nodes: []
+  discovery: "static"  # static | consul | etcd

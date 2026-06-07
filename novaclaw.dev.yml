@@ -1,0 +1,152 @@
+# NovaClaw Development Configuration
+port: 3000
+bind: "loopback"
+workspaceDir: "./workspace"
+
+models:
+  primary: "openai/gpt-4o"
+  fallback: "openai/gpt-4o-mini"
+  providers:
+    openai:
+      apiKey: "${OPENAI_API_KEY}"
+      baseUrl: "https://api.openai.com"
+      timeout: 60000
+
+skills:
+  dirs:
+    - "./skills/workspace"
+    - "./skills/managed"
+    - "./skills/bundled"
+  include: ["**/*.md"]
+  exclude: ["**/drafts/**"]
+
+tools:
+  policy: "full"
+  sandbox:
+    enabled: false  # 开发环境关闭沙箱
+    timeout: 600000
+    allowedCommands:
+      - "agent"
+      # ── 云平台 CLI ──
+      - "climc"
+      # ── 版本控制 ──
+      - "git"
+      # ── JS/Node 生态 ──
+      - "node"
+      - "npm"
+      - "npx"
+      - "pnpm"
+      - "yarn"
+      # ── Python 生态 ──
+      - "python"
+      - "python3"
+      - "pip"
+      - "pip3"
+      # ── 网络工具 ──
+      - "curl"
+      - "wget"
+      - "ping"
+      - "dig"
+      - "nslookup"
+      - "ssh"
+      - "scp"
+      # ── 文件与文本处理 ──
+      - "cd"
+      - "ls"
+      - "cat"
+      - "head"
+      - "tail"
+      - "less"
+      - "grep"
+      - "awk"
+      - "sed"
+      - "sort"
+      - "uniq"
+      - "wc"
+      - "find"
+      - "xargs"
+      - "jq"
+      - "tee"
+      - "diff"
+      # ── 文件管理 ──
+      - "cp"
+      - "mv"
+      - "mkdir"
+      - "touch"
+      - "chmod"
+      - "file"
+      - "tar"
+      - "gzip"
+      - "zip"
+      - "unzip"
+      # ── 系统信息 ──
+      - "echo"
+      - "env"
+      - "which"
+      - "whoami"
+      - "hostname"
+      - "uname"
+      - "date"
+      - "df"
+      - "du"
+      - "free"
+      - "ps"
+      - "top"
+      # ── 容器 ──
+      - "docker"
+      - "docker-compose"
+      - "kubectl"
+
+  execUseLoginShell: true
+
+  # 开发环境允许 webchat、cli 执行命令；已安装的 OpenClaw 扩展自动获得权限
+  allowExecInChannels:
+    - "webchat"
+    - "cli"
+
+  formatResultWithLLM: false
+  autoExecuteParsedCalls: true
+
+memory:
+  enabled: true
+  storageDir: "~/.novaclaw/memory"
+  indexConversations: true
+  indexWorkspace: true  # 开发时按需手动触发
+  maxDocumentSizeMB: 10
+  maxRetrievalNodes: 5
+
+channels:
+  enabled:
+    - "webchat"
+    - "cli"
+
+performance:
+  skillsCache:
+    maxSize: 50
+    ttl: 60  # 开发环境缩短 TTL
+  semanticSearch:
+    enabled: true
+    threshold: 0.6  # 降低阈值以匹配更多结果
+  streaming:
+    enabled: true
+    chunkSize: 256
+
+security:
+  auth:
+    enabled: false
+  rateLimit:
+    enabled: false  # 开发环境关闭限流
+  cors:
+    enabled: true
+    origins: ["*"]
+
+logging:
+  level: "debug"
+  format: "pretty"
+  showCaller: true
+
+monitoring:
+  enabled: true
+  health:
+    enabled: true
+    interval: 10000
